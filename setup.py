@@ -7,12 +7,7 @@ setup(
     author="Venkat.R",
     author_email="ai.venkat.r@gmail.com",
     packages=find_packages(),
-    install_requires=[
-        "fastapi",
-        "sqlalchemy",
-        "pymysql",
-        "uvicorn"
-    ],
+    install_requires=["fastapi", "sqlalchemy", "pymysql", "uvicorn"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",  # Replace with your license

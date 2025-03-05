@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from core import APIBridge
+from api_bridge.core import APIBridge
 
 # Multiple MySQL database configurations
 db_configs = {
@@ -8,15 +8,15 @@ db_configs = {
         "port": 3306,
         "database": "database1",
         "user": "user1",
-        "password": "pass1"
+        "password": "pass1",
     },
     "db2": {
         "host": "localhost",
         "port": 3306,
         "database": "database2",
         "user": "user2",
-        "password": "pass2"
-    }
+        "password": "pass2",
+    },
 }
 
 app = FastAPI()

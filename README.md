@@ -1,27 +1,28 @@
-# api-bridge
+# smart-api-bridge
 
-A flexible, dynamic CRUD (Create, Read, Update, Delete) operations library for FastAPI applications with MySQL database support.
+A flexible and dynamic CRUD (Create, Read, Update, Delete) operations library for FastAPI applications with MySQL database support.
 
 ## Features
 
 - Dynamic CRUD operations for any MySQL table
 - Simple integration with FastAPI
 - Automatic pagination
-- Support for hard delete and soft delete operations
-- Support for partial updates via PATCH method
+- Supports both hard delete and soft delete operations
+- Partial updates via the PATCH method
 - Configurable database connection
+- Secure authentication and authorization support
 
 ## Installation
 
 ```bash
-pip install api-bridge
+pip install smart-api-bridge
 ```
 
 ## Quick Start
 
 ```python
 from fastapi import FastAPI
-from dynamic_crud import get_db_connection, DynamicCrudRouter
+from api_bridge import APIBridge
 
 app = FastAPI()
 
@@ -34,28 +35,29 @@ db_config = {
     "password": "password@123",
 }
 
-# Create database engine
-engine = get_db_connection(**db_config)
 
-# Create and include dynamic CRUD router
-crud_router = DynamicCrudRouter(engine)
-app.include_router(crud_router.get_router())
+# Initialize APIBridge
+api_bridge = APIBridge(db_config)
+
+# Create FastAPI app
+app = FastAPI()
+app.include_router(api_bridge.router)
 
 # Run with uvicorn
 # uvicorn main:app --reload
 ```
 
-## API Routes
+## Available Endpoints
 
-| Method | Route                        | Description                     |
-|--------|------------------------------|---------------------------------|
-| GET    | /base/test                   | Test database connection        |
-| GET    | /base/{table_name}           | List records with pagination    |
-| POST   | /base/{table_name}           | Create a new record             |
-| PUT    | /base/{table_name}/{id}      | Update a record completely      |
-| PATCH  | /base/{table_name}/{id}      | Update specific fields          |
-| DELETE | /base/{table_name}/{id}      | Soft delete a record            |
-| DELETE | /base/{table_name}/{id}/hard | Hard delete a record            |
+| Method  | Endpoint                                  | Description                           |
+|---------|-------------------------------------------|---------------------------------------|
+| GET     | `/api/test`                              | Test database connection             |
+| GET     | `/api/{table_name}`                      | Fetch all records (supports pagination)  |
+| POST    | `/api/{table_name}`                      | Insert a new record                  |
+| PUT     | `/api/{table_name}/{record_id}`          | Update an existing record            |
+| PATCH   | `/api/{table_name}/{record_id}`          | Partially update a record            |
+| DELETE  | `/api/{table_name}/{record_id}`          | Soft delete a record                 |
+| DELETE  | `/api/{table_name}/{record_id}/hard`     | Permanently delete a record          |
 
 ## Example Applications
 
@@ -64,9 +66,9 @@ app.include_router(crud_router.get_router())
 Manage products, categories, inventory, and orders using dynamic CRUD operations:
 
 ```python
-from fastapi import FastAPI
-from dynamic_crud import get_db_connection, DynamicCrudRouter
 import os
+from fastapi import FastAPI
+from api_bridge import APIBridge
 
 app = FastAPI(title="E-commerce API")
 
@@ -79,20 +81,15 @@ db_config = {
     "password": os.getenv("DB_PASS", "password"),
 }
 
-# Connect to database
-engine = get_db_connection(**db_config)
+# Initialize APIBridge
+api_bridge = APIBridge(db_config)
 
-# Create dynamic routers
-crud_router = DynamicCrudRouter(engine)
-app.include_router(crud_router.get_router())
+app.include_router(api_bridge.router)
 
-# Add custom routes as needed
 @app.get("/")
 def read_root():
     return {"message": "E-commerce API ready"}
 ```
-
-Database tables like `products`, `categories`, `inventory`, and `orders` are automatically available through the dynamic CRUD routes.
 
 ### 2. Content Management System (CMS)
 
@@ -100,7 +97,7 @@ Manage blog posts, pages, users, and media files:
 
 ```python
 from fastapi import FastAPI
-from dynamic_crud import get_db_connection, DynamicCrudRouter
+from api_bridge import 
 from fastapi.middleware.cors import CORSMiddleware
 import os
 
@@ -124,30 +121,25 @@ db_config = {
     "password": os.getenv("DB_PASS", "password"),
 }
 
-# Connect to database
-engine = get_db_connection(**db_config)
+# Initialize APIBridge
+api_bridge = APIBridge(db_config)
 
-# Create dynamic router
-crud_router = DynamicCrudRouter(engine, prefix="/api")
-app.include_router(crud_router.get_router())
+app.include_router(api_bridge.router)
 
-# Add custom routes
 @app.get("/")
 def read_root():
     return {"message": "CMS API ready"}
 ```
 
-Database tables like `posts`, `pages`, `users`, and `media` are automatically available through the dynamic CRUD routes.
-
-## Workflow to Publish as a PIP Module
+## Workflow to Publish as a PyPI Package
 
 1. **Prepare Your Package Structure**:
    ```
-   dynamic-crud-fastapi/
-   ├── dynamic_crud/
+   smart-api-bridge/
+   ├── smart_api_bridge/
    │   ├── __init__.py
    │   ├── db.py
-   │   └── router.py
+   │   ├── router.py
    ├── setup.py
    ├── README.md
    ├── LICENSE
@@ -173,7 +165,7 @@ Database tables like `posts`, `pages`, `users`, and `media` are automatically av
 
 5. **Test Your Package from TestPyPI**:
    ```bash
-   pip install --index-url https://test.pypi.org/simple/ dynamic-crud-fastapi
+   pip install --index-url https://test.pypi.org/simple/ smart-api-bridge
    ```
 
 6. **Upload to PyPI**:

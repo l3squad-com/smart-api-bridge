@@ -1,12 +1,12 @@
 from fastapi import FastAPI
-from smart_api_bridge.core import APIBridge
+from api_bridge.core import APIBridge
 
 db_config = {
-  "host": "localhost",
-  "port": 3306,
-  "database": "ecospace",
-  "user": "root",
-  "password": ""
+    "host": "localhost",
+    "port": 3306,
+    "database": "ecospace",
+    "user": "root",
+    "password": "",
 }
 
 app = FastAPI()
