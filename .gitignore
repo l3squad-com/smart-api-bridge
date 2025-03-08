@@ -170,5 +170,3 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-# Ignore pre-commit cache
-.pre-commit/
