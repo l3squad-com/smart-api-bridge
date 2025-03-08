@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, inspect, text
 from datetime import datetime
 from sqlalchemy.orm import sessionmaker
 from pydantic import BaseModel
-from typing import Any, Dict
+from typing import Any, Dict, List
 from urllib.parse import quote_plus
 
 class APIBridge:
@@ -26,6 +26,31 @@ class APIBridge:
             return engine
         except Exception as e:
             raise Exception(f"Database connection failed: {str(e)}")
+    
+    def _validate_table(self, table_name: str) -> None:
+        """
+        Validate if the given table exists in the database.
+        Raises a ValueError if the table does not exist.
+        """
+        inspector = inspect(self.engine)
+        existing_tables = set(inspector.get_table_names())
+
+        if table_name not in existing_tables:
+            raise ValueError(f"Invalid table name specified: {table_name}")
+    
+    def _validate_columns(
+        self, table_name: str, columns: List[str]
+    ) -> None:
+        """
+        Validate if the given columns exist in the model class.
+        Raises a ValueError if any invalid columns are found.
+        """
+        model_columns = [column.get("name") for column in inspect(self.engine).get_columns(table_name)]
+        invalid_columns = set(columns) - set(model_columns)
+        if invalid_columns:
+            raise ValueError(
+                f"Invalid column(s) specified: {', '.join(invalid_columns)}"
+            )
 
     def _get_table_columns(self, table_name: str):
         inspector = inspect(self.engine)
@@ -62,6 +87,7 @@ class APIBridge:
         offset = (page - 1) * limit
 
         try:
+            self._validate_table(table_name)
             query = text(f"SELECT * FROM {table_name} LIMIT :limit OFFSET :offset")
             result = session.execute(query, {"limit": limit, "offset": offset}).fetchall()
             count_query = text(f"SELECT COUNT(*) FROM {table_name}")
@@ -91,6 +117,8 @@ class APIBridge:
     def create_record(self, table_name: str, record: Dict[str, Any] = Body(...)):
         session = self.Session()
         try:
+            self._validate_table(table_name)
+            self._validate_columns(table_name, record.keys())
             columns = ", ".join(record.keys())
             placeholders = ", ".join([f":{key}" for key in record.keys()])
             query = text(f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})")
@@ -108,6 +136,8 @@ class APIBridge:
     def update_record(self, table_name: str, record_id: int, record: Dict[str, Any] = Body(...)):
         session = self.Session()
         try:
+            self._validate_table(table_name)
+            self._validate_columns(table_name, record.keys())
             set_clause = ", ".join([f"{key}=:{key}" for key in record.keys()])
             query = text(f"UPDATE {table_name} SET {set_clause} WHERE id = :record_id")
             params = {**record, "record_id": record_id}
@@ -122,9 +152,11 @@ class APIBridge:
         finally:
             session.close()
 
-    def soft_delete_record(self, table_name: str, record_id: int, payload: BaseModel = Body(...)):
+    def soft_delete_record(self, table_name: str, record_id: int, payload: Dict[str, Any] = Body(...)):
         session = self.Session()
         try:
+            self._validate_table(table_name)
+            self._validate_columns(table_name, payload.keys())
             current_time = int(datetime.now().timestamp())
 
             query = text(f"""
@@ -138,7 +170,7 @@ class APIBridge:
 
             params = {
                 "record_id": record_id,
-                "deleted_by_guid": payload.deleted_by_guid,
+                "deleted_by_guid": payload["deleted_by_guid"],
                 "deleted_at": current_time
             }
 
@@ -154,7 +186,7 @@ class APIBridge:
             return {
                 "message": f"Record {record_id} soft deleted from {table_name}",
                 "deleted_at": current_time,
-                "deleted_by": payload.deleted_by_guid
+                "deleted_by": payload["deleted_by_guid"]
             }
 
         except Exception as e:
@@ -166,6 +198,7 @@ class APIBridge:
     def delete_record(self, table_name: str, record_id: int):
         session = self.Session()
         try:
+            self._validate_table(table_name)
             query = text(f"DELETE FROM {table_name} WHERE id = :record_id")
             session.execute(query, {"record_id": record_id})
             session.commit()
@@ -181,6 +214,8 @@ class APIBridge:
     def patch_record(self, table_name: str, record_id: int, record: Dict[str, Any] = Body(...)):
         session = self.Session()
         try:
+            self._validate_table(table_name)
+            self._validate_columns(table_name, record.keys())
             set_clause = ", ".join([f"{key}=:{key}" for key in record.keys()])
             query = text(f"UPDATE {table_name} SET {set_clause} WHERE id = :record_id")
             params = {**record, "record_id": record_id}
