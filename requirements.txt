@@ -8,3 +8,4 @@ pydantic-settings
 pip-tools
 email-validator
 sqlalchemy>=1.4
+psycopg2==2.9.10
